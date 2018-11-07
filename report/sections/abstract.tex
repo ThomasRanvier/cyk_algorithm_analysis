@@ -1,0 +1,12 @@
+This paper presents six different implementations of the Cocke-Younger-Kasami algorithm (CYK algorithm for short).
+The first one is a naive version, it uses the Divide and conquer approach and has a complexity of $O(3^n)$.
+The other implementations make use of Dynamic programming, there are two versions using bottom-up approach and the others use the top-down method, they all have a complexity of $O(n^3)$.
+
+The four first parsers are classic implementations of the CYK algorithm using different programming methods, the last two have some specialities.
+After the presentation of the implementations and the analysis of the different complexities a chapter is focused on experimentations with the four first parsers using diverse context-free grammars in the Chomsky normal-form.
+
+The implementation of a parser able to make use of linear grammars with a running time of $O(n^3)$ and based on the top-down implementation is presented.
+Experimentations and comparisons with the results of the four previous parsers are made.
+
+A parser that automatically corrects the input string in order to make it match the given grammar (when possible) in $O(n^3)$ is presented.
+This parser is based on the top-down initial implementation, it suggests to the user a correction of the initial string and indicates the number of character modifications and character deletions that were needed to reach total correctness.

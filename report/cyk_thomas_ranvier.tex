@@ -1,0 +1,50 @@
+\documentclass{report}
+
+\input{structure}
+
+\begin{document}
+
+\input{sections/titlepage}
+
+\chapter*{Abstract}
+\input{sections/abstract}
+
+\tableofcontents
+
+\chapter*{Introduction}
+\addcontentsline{toc}{chapter}{Introduction}
+\input{sections/introduction}
+
+\chapter{Context}
+\input{sections/chapter_1}
+
+\chapter{Implementations of the different parsers}
+\input{sections/chapter_2}
+
+\chapter{Experimentations, comparisons and obtained results}
+\input{sections/chapter_3}
+
+\chapter{Linear grammar}
+\input{sections/chapter_4}
+
+\chapter{Error correction}
+\input{sections/chapter_5}
+
+\chapter*{Conclusion}
+\addcontentsline{toc}{chapter}{Conclusion}
+\input{sections/conclusion}
+
+\listofalgorithms
+\addcontentsline{toc}{chapter}{List of algorithms}
+
+\listoffigures
+
+\nocite{*}
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\chapter*{Appendix}
+\addcontentsline{toc}{chapter}{Appendix}
+\input{sections/appendix}
+
+\end{document}

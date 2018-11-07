@@ -1,0 +1,32 @@
+
+\section{Generation of the strings}
+
+In order to make the experimentations easier the input strings are automaticaly generated using patterns.
+Those patterns are put in a file by the user which allows him to quickly be able to experiment with different cases.
+Then when the Enumeration class is instanciated it reads the patterns from the file and all the strings are generated and stocked in a vector, then the strings can be accessed easily from anywhere.
+
+The patterns uses the following expression:
+$$
+c \string^ x \text{\textvisiblespace} d \string^ y
+$$
+
+Where $c$ is an ASCII character and $x$ is the number of time we add the character, a space separates each characters.
+It is also possible not to renseignate $\string^ x$, then the character is added 1 time.
+
+That method allows the user to generate new strings for different grammars very quickly.
+
+\section{Experimentations}
+
+In some of the experimentations the results of the naive parser will not be displayed, which means that it was not efficient enough to be interesting.
+
+The results of the `boolean' bottom-up parser will be displayed only once per grammar since no matter the pattern of the input string it does not change the behaviour of this parser.
+However its results might be used several times for a same grammar in order to use them as reference for the other parsers.
+
+\subsection{Well balanced parentheses}
+\input{sections/grammar_1.tex}
+
+\subsection{String starting with an `a'}
+\input{sections/grammar_2.tex}
+
+\subsection{String ending with an `a'}
+\input{sections/grammar_3.tex}

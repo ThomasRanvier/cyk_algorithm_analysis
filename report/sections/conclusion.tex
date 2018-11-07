@@ -1,0 +1,9 @@
+The efficiency of the different implementations of the Cocke-Younger-Kasami algorithm depends on the used development approach for a big part but also of the given grammar.
+
+The naive parser with its complexity of $O(3^n)$ is by far the less efficient of the implementations, there are only a few cases for which this parser can be used and compete with the others and those cases are not the cases usually met in real life.
+
+All the other parsers are implemented using Dynamic programming and have a complexity of $O(n^3)$.
+However, if with grammars in the Chomsky normal-form the two bottom-up, the top-down and the linear parsers can be more or less equivalent depending on the cases, when a linear grammar is used the linear parser is in most cases more efficient than the others.
+
+The correction parser also has a complexity of $O(n^3)$ since it uses the top-down paradigm, but in practice it is less efficient than all the other implementations since it does more recursive calls to test different modifications.
+Even if this last parser is slower than the others it can be used in way more useful ways, those kind of correction parsers are especially used in DNA and RNA analysis for example.

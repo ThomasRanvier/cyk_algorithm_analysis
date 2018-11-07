@@ -1,0 +1,330 @@
+The grammar is the following:
+
+\begin{align*} 
+    &S \to SS|LA|LR\\
+    &A \to SR\\
+    &L \to (\\
+    &R \to )
+\end{align*}
+
+With this grammar it is possible to demonstrate that the top-down parser needs less recursive calls when it can `detect' that the string does not match the grammar very quickly.
+
+\subsubsection{Number of iterations/recursive calls for each parsers}
+
+With this grammar two interesting cases will be considered:
+
+\begin{enumerate}
+    \item Any pattern starting with a right parenthese:
+    $$
+    patterns = 
+    \begin{cases}
+        )\string^ n\\
+        ) \text{ } (\string^ n - 1\\
+        )\string^ n - 1 \text{ } (\\
+    \end{cases}
+    $$
+    Many other patterns corresponding to the same case could be found, as long as the first character is a right parenthese.
+    This case is interesting because it is the case in which the top-down parser needs to solve the less sub-problems in order to parse the strings.
+    
+    For example if it parses a string of size $n$ based on one of the patterns above it will need to solve $2n - 1$ sub-problems to give the result.
+    That information, while interesting, is not relevant to anticipate the running time of the parser since even if we know how many sub-problems the parser will solve it can need a very different amount of recursive calls.
+    
+    \item The other interesting case is the pattern `$(\string^ n$', that pattern is the worst that can be generated with this grammar for the top-down parser.
+
+    With that pattern the top-down parser will need to solve $n^2 + \lfloor \dfrac{n}{2} \rfloor$ sub-problems to parse a string of size $n$.
+\end{enumerate}
+
+Of course as demonstrated in the section 2.4 with equation \ref{eq:bottom-up_iterations} the `boolean' bottom-up parser always needs the same amount of iterations for a string of size $n$ and a given grammar:
+
+\begin{itemize}
+    \item[$-$] $n = 500$
+    \item[$-$] $gt = 2$
+    \item[$-$] $gnt = 4$
+\end{itemize}
+
+$$
+500 \cdot 2 + \dfrac{4}{6} \cdot (3 \cdot 500^2 \cdot (500 + 1) - 500 \cdot (500 + 1) \cdot (2 \cdot 500 + 1)) = \text{83,334,000 iterations}
+$$
+
+Which is indeed the number of iterations obtained when running the code.
+
+The `string' bottom-up parser will also follow the same behaviour for any string pattern.
+
+It is now possible to represent the anticiped behaviour that the `boolean' bottom-up parser will follow for both cases.
+
+\FloatBarrier
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=1 by 1},height=0.5\textwidth,width=0.5\textwidth, domain=0:1000]
+    \nextgroupplot[title=`Boolean' bottom-up for both cases, ylabel=iterations, xlabel=string size]
+    \addplot[red]{2 * x + ((4 / 6) * ((3 * (x^2) * (x + 1)) - (x * (x + 1) * ((2 * x) + 1))))};
+\end{groupplot}
+\end{tikzpicture}
+\caption{Anticipation of the `boolean' bottom-up parser, grammar 1}
+\end{figure}
+\FloatBarrier
+
+\subsubsection{Comparing the efficiency}
+
+The first experimentation uses the case in which the strings are starting with a right patenthese: $)\string^ n$.
+
+\FloatBarrier
+\begin{figure}[h]
+\begin{tikzpicture}
+    \begin{groupplot}[group style={group size=2 by 2},height=0.5\textwidth,width=0.5\textwidth] 
+    \nextgroupplot[title=Both bottom-up counters, ylabel=iterations, legend pos=north west]
+    \addplot coordinates {
+        (50, 21121)
+        (100, 167246)
+        (200, 1334496)
+        (400, 10668996)
+        (600, 36003496)
+        (800, 85337996)
+        (1000, 166672496)};
+    \addlegendentry{String}
+    \addplot coordinates {
+        (50, 83400)
+        (100, 666800)
+        (200, 5333600)
+        (400, 42667200)
+        (600, 144000800)
+        (800, 341334400)
+        (1000, 666668000)};
+    \addlegendentry{Boolean}
+    \nextgroupplot[title=Both bottom-up running times, ylabel=seconds, legend pos=north west]
+    \addplot coordinates {
+        (50, 0.000571)
+        (100, 0.003931)
+        (200, 0.031064)
+        (400, 0.354137)
+        (600, 1.25128)
+        (800, 3.00095)
+        (1000, 6.0186)};
+    \addlegendentry{String}
+    \addplot coordinates {
+        (50, 0.002598)
+        (100, 0.019514)
+        (200, 0.142831)
+        (400, 1.17313)
+        (600, 4.05125)
+        (800, 10.2203)
+        (1000, 20.8444)};
+    \addlegendentry{Boolean}
+    \nextgroupplot[title=Top-down counter, xlabel=string size, ylabel=recursive calls]
+    \addplot coordinates {
+        (50, 3676)
+        (100, 14851)
+        (200, 59701)
+        (400, 239401)
+        (600, 539101)
+        (800, 958801)
+        (1000, 1498501)};
+    \nextgroupplot[title=Top-down running time, xlabel=string size, ylabel=seconds, legend pos=north west]
+    \addplot coordinates {
+        (50, 0.000117)
+        (100, 0.000302)
+        (200, 0.000982)
+        (400, 0.003857)
+        (600, 0.007999)
+        (800, 0.015024)
+        (1000, 0.022071)};
+    \addlegendentry{Total}
+    \addplot coordinates {
+        (50, 0.000048)
+        (100, 0.000097)
+        (200, 0.000234)
+        (400, 0.000962)
+        (600, 0.00241)
+        (800, 0.003652)
+        (1000, 0.005607)};
+    \addlegendentry{Initialization}
+    \addplot coordinates {
+        (50, 0.000046)
+        (100, 0.000195)
+        (200, 0.000733)
+        (400, 0.002882)
+        (600, 0.006131)
+        (800, 0.011)
+        (1000, 0.017119)};
+    \addlegendentry{Parsing}
+    \end{groupplot}
+\end{tikzpicture}
+\caption{Both bottom-up and top-down parsers behaviours, grammar 1, case 1}
+\end{figure}
+\FloatBarrier
+
+The `boolean' bottom-up parser follows exactly the predicted behaviour, the number of iterations going up following the equation \ref{eq:bottom-up_iterations} and its running time follows exactly the same curve since for each iteration the parser does exactly the same amount of loops.
+For this grammar it is slower than the `string' version.
+
+Here the top-down parser is faster than both bottom-up parsers.
+To get a more precise result the initialization and the parsing process have been timed apart from each other.
+We can see that the initialization time scales up a power function.
+The parsing time seems to follow the curve of the recursive calls counter.
+\\
+\\
+It is very easy to check the complexity of the two bottom-up parsers here by resolving for both an equation of the form $y = a \cdot x^3$ by replacing $x$ and $y$ by the coordinates of a point of their graphs.
+
+Those are respectively the theorical expressions of the `boolean' and `string' bottom-up parsers:
+
+\begin{align*}
+    &y = 2.0844 \cdot 10^{-8} \cdot x^3 &y = 6.0186 \cdot 10^{-9} \cdot x^3
+\end{align*}
+
+\FloatBarrier
+\begin{figure}[h]
+\begin{tikzpicture}
+    \begin{groupplot}[group style={group size=2 by 1},height=0.5\textwidth,width=0.5\textwidth] 
+    \nextgroupplot[title=`Boolean' bottom-up, xlabel=string size, ylabel=seconds, legend pos=north west]
+    \addplot[domain=0:1000, samples=100, line width=1.5pt, green] {2.0844*(10^(-8))*(x^3)};
+    \addlegendentry{Theory}
+    \addplot[only marks, mark=*, mark size=2pt] coordinates {
+        (50, 0.002598)
+        (100, 0.019514)
+        (200, 0.142831)
+        (400, 1.17313)
+        (600, 4.05125)
+        (800, 10.2203)
+        (1000, 20.8444)};
+    \addlegendentry{Real}
+    \nextgroupplot[title=`String' bottom-up, xlabel=string size, ylabel=seconds, legend pos=north west]
+    \addplot[domain=0:1000, samples=100, line width=1.5pt, green] {6.0186*(10^(-9))*(x^3)};
+    \addlegendentry{Theory}
+    \addplot[only marks, mark=*, mark size=2pt] coordinates {
+        (50, 0.000571)
+        (100, 0.003931)
+        (200, 0.031064)
+        (400, 0.354137)
+        (600, 1.25128)
+        (800, 3.00095)
+        (1000, 6.0186)};
+    \addlegendentry{Real}
+    \end{groupplot}
+\end{tikzpicture}
+\caption{Checking theorical fit, both bottom-up parsers}
+\end{figure}
+\FloatBarrier
+
+The two functions fit almost perfectly to the points which confirms the $O(n^3)$ complexity for both bottom-up parsers.
+\\
+\\
+The naive parser is very slow with that grammar, but it is possible to check its complexity too by resolving the equation $y = a \cdot 3^x$.
+
+\begin{align*}
+    &y = 2.146422 \cdot 10^{-10} \cdot 3^x
+\end{align*}
+
+\FloatBarrier
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+    \begin{groupplot}[group style={group size=1 by 1},height=0.5\textwidth,width=0.5\textwidth] 
+    \nextgroupplot[title=naive, xlabel=string size, ylabel=seconds, legend pos=north west]
+    \addplot[domain=10:23, samples=100, line width=1.5pt, green] {2.146422*(10^(-10))*(3^x)};
+    \addlegendentry{Theory}
+    \addplot[only marks, mark=*, mark size=2pt] coordinates {
+        (10, 0.000236)
+        (15, 0.017009)
+        (18, 0.248498)
+        (20, 1.39282)
+        (21, 3.36746)
+        (22, 7.98121)
+        (23, 20.2071)};
+    \addlegendentry{Real}
+    \end{groupplot}
+\end{tikzpicture}
+\caption{Checking theorical fit, naive parser}
+\end{figure}
+\FloatBarrier
+
+The theorical curve fits perfectly the running time of the naive parser which proves that the complexity of the naive parser is $O(3^n)$, it also shows that with that grammar this parser is very bad compared to the others.
+\\
+\\
+The second pattern is the pattern only constituated by left parentheses: `$(\string^ n$', what makes it interesting is the fact that it is the worst case that we can generate with this grammar for the top-down parser.
+The bottom-up parsers results will not be displayed in that case since they have the same behaviour as with the first case.
+
+\FloatBarrier
+\begin{figure}[h]
+\begin{tikzpicture}
+    \begin{groupplot}[group style={group size=2 by 1},height=0.5\textwidth,width=0.5\textwidth] 
+    \nextgroupplot[title=Top-down counter, xlabel=string size, ylabel=recursive calls]
+    \addplot coordinates {
+        (50, 43526)
+        (100, 340801)
+        (200, 2696601)
+        (400, 21453201)
+        (600, 72269801)
+        (800, 171146401)
+        (1000, 334083001)};
+    \nextgroupplot[title=Top-down running time, xlabel=string size, ylabel=seconds, legend pos=north west]
+    \addplot coordinates {
+        (50, 0.000605)
+        (100, 0.004426)
+        (200, 0.031748)
+        (400, 0.252762)
+        (600, 0.819545)
+        (800, 1.88128)
+        (1000, 3.71316)};
+    \addlegendentry{Total}
+    \addplot coordinates {
+        (50, 0.000033)
+        (100, 0.000119)
+        (200, 0.000244)
+        (400, 0.00081)
+        (600, 0.001904)
+        (800, 0.003088)
+        (1000, 0.005164)};
+    \addlegendentry{Initialization}
+    \addplot coordinates {
+        (50, 0.000561)
+        (100, 0.004297)
+        (200, 0.031488)
+        (400, 0.251933)
+        (600, 0.817614)
+        (800, 1.87816)
+        (1000, 3.70797)};
+    \addlegendentry{Parsing}
+    \end{groupplot}
+\end{tikzpicture}
+\caption{Top-down parser behaviour, grammar 1, case 2}
+\end{figure}
+\FloatBarrier
+
+As we can see on the graph above in that case the initialization time of the top-down parser is negligible, the parsing time is the one that matters.
+The parsing time follows exactly the same curve as the number of recursive calls.
+Despite the fact that this case is the worst one for the top-down parser its running time remains lower than the other parsers.
+
+We can conclude that for this grammar the top-down parser is more efficient than both bottom-up algorithms.
+\\
+\\
+Here we can verify the complexity of the top-down parser by resolving the same equation as for the two bottom-up parsers.
+
+\begin{align*}
+    &y = 3.10797 \cdot 10^{-9} \cdot x^3
+\end{align*}
+
+\FloatBarrier
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+    \begin{groupplot}[group style={group size=1 by 1},height=0.5\textwidth,width=0.5\textwidth] 
+    \nextgroupplot[title=top-down, xlabel=string size, ylabel=seconds, legend pos=north west]
+    \addplot[domain=0:1000, samples=100, line width=1.5pt, green] {3.70797*(10^(-9))*(x^3)};
+    \addlegendentry{Theory}
+    \addplot[only marks, mark=*, mark size=2pt] coordinates {
+        (50, 0.000561)
+        (100, 0.004297)
+        (200, 0.031488)
+        (400, 0.251933)
+        (600, 0.817614)
+        (800, 1.87816)
+        (1000, 3.70797)};
+    \addlegendentry{Real}
+    \end{groupplot}
+\end{tikzpicture}
+\caption{Checking theorical fit, grammar 1, case 2}
+\end{figure}
+\FloatBarrier
+
+The curve fits perfectly the points of the top-down parser which proves that the complexity of the algorithm is $O(n^3)$.
+

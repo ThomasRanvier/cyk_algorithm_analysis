@@ -1,0 +1,25 @@
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {1}{\ignorespaces 3D plot of the function \ref {eq:bottom-up_iterations}\relax }}{18}{figure.caption.4}
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {2}{\ignorespaces Anticipation of the `boolean' bottom-up parser, grammar 1\relax }}{21}{figure.caption.5}
+\contentsline {figure}{\numberline {3}{\ignorespaces Both bottom-up and top-down parsers behaviours, grammar 1, case 1\relax }}{22}{figure.caption.6}
+\contentsline {figure}{\numberline {4}{\ignorespaces Checking theorical fit, both bottom-up parsers\relax }}{23}{figure.caption.7}
+\contentsline {figure}{\numberline {5}{\ignorespaces Checking theorical fit, naive parser\relax }}{24}{figure.caption.8}
+\contentsline {figure}{\numberline {6}{\ignorespaces Top-down parser behaviour, grammar 1, case 2\relax }}{24}{figure.caption.9}
+\contentsline {figure}{\numberline {7}{\ignorespaces Checking theorical fit, grammar 1, case 2\relax }}{25}{figure.caption.10}
+\contentsline {figure}{\numberline {8}{\ignorespaces Anticipation of the behaviours of the parsers, grammar 2\relax }}{27}{figure.caption.11}
+\contentsline {figure}{\numberline {9}{\ignorespaces Both bottom-up and naive parsers behaviours, grammar 2, case 1\relax }}{28}{figure.caption.12}
+\contentsline {figure}{\numberline {10}{\ignorespaces Both bottom-up and naive parsers behaviour, grammar 2, case 2\relax }}{29}{figure.caption.13}
+\contentsline {figure}{\numberline {11}{\ignorespaces Running time of the `string' bottom-up parser, grammar 3\relax }}{30}{figure.caption.14}
+\contentsline {figure}{\numberline {12}{\ignorespaces Anticipation of the behaviours of the parsers, grammar 3\relax }}{32}{figure.caption.15}
+\contentsline {figure}{\numberline {13}{\ignorespaces The 4 parsers behaviours, grammar 3\relax }}{33}{figure.caption.16}
+\contentsline {figure}{\numberline {14}{\ignorespaces The `string' bottom-up parser worst case, grammar 3\relax }}{34}{figure.caption.17}
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {15}{\ignorespaces Results with linear grammar 1, case 1\relax }}{41}{figure.caption.18}
+\contentsline {figure}{\numberline {16}{\ignorespaces Results with linear grammar 1, case 2\relax }}{43}{figure.caption.19}
+\contentsline {figure}{\numberline {17}{\ignorespaces Results with linear grammar 2, case 1\relax }}{45}{figure.caption.20}
+\contentsline {figure}{\numberline {18}{\ignorespaces Results with linear grammar 2, case 2\relax }}{46}{figure.caption.21}
+\contentsline {figure}{\numberline {19}{\ignorespaces Checking theorical fit, linear parser\relax }}{47}{figure.caption.22}
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {20}{\ignorespaces Checking theorical fit, correction parser\relax }}{55}{figure.caption.24}

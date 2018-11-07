@@ -1,0 +1,570 @@
+
+\section{Grammar preprocessing}
+
+The goal was to implement an algorithm that would convert a context-free grammar into a grammar in the Chomsky normal-form, the most simple choice was to develop a new version of the Grammar class.
+
+On its initialization the class is given a file that contains the grammar, which can be in any form.
+
+The first thing that the class does is to replace all the \textit{non-terminal} variables by an index, starting at 0 for the \textit{start symbol} and increasing by 1 for every variable, the \textit{terminals} are also put in negative so there is no chance of confusion between the variables.
+
+Then the grammar is converted to the Chomsky normal-form, following the same process as manually explained is section 1.1.2.
+
+Finally the converted grammar is splitted into a set of \textit{terminal} rules and a set of \textit{non-terminal} rules.
+\\
+\\
+The final grammar is stocked and can be accessed through the following variables:
+
+\begin{itemize}
+    \item[$-$] A 3D vector of integers named `non\_terminal\_rules'.
+        \begin{enumerate}
+            \item The first dimension represents the \textit{non-terminal} variable, converted as an index starting at 0 for the \textit{start symbol}.
+            \item Each element of the second dimension is a right hand of the variable from the first dimension.
+            \item The pairs of \textit{non-terminals} are stocked in the third dimension.
+        \end{enumerate}
+    \item[$-$] A 2D vector of integers named `terminal\_rules' that allows access to the \textit{terminal} rules.
+    \item[$-$] Since there are no \textit{non-terminal} rules for every variable, when it is the case the variable is added to the string `nt\_variables'.
+    \item[$-$] The string `t\_variables' is exactly the same as the one above but for the \textit{terminal} rules.
+\end{itemize}
+
+For example if one gives the following grammar to the program:
+
+\begin{align*}
+    &S \to Ac | b\\
+    &A \to aS | aB\\
+    &B \to bS\\
+\end{align*}
+
+This is how the grammar will be stocked:
+
+\begin{itemize}
+    \item[$-$] `non\_terminal\_rules' =
+        \begin{align*}
+            &0 \to 0\text{ }0 | 2\text{ }1 | 2\text{ }3 &2 \to\\
+            &1 \to 0\text{ }3                           &3 \to\\
+        \end{align*}
+    \item[$-$] `terminal\_rules' =
+        \begin{align*}
+            &0 \to  &2 \to (\\
+            &1 \to  &3 \to )\\
+        \end{align*}
+    \item[$-$] `nt\_variables' = "0 1"
+    \item[$-$] `t\_variables' = "2 3"
+\end{itemize}
+
+The symbol `$|$' indicates the separation of the second dimension of the vector.
+As we can see in the variables content above the \textit{non-terminals} are converted in indices.
+
+That preprocessing allows one to give a linear grammar to the program without bothering to convert anything by advance.
+
+Since the conversion of a linear grammar in the Chomsky normal-form often add new rules there is no reason to think that it could in any way fasten the parsing process to automaticly convert a linear grammar instead of directly giving the algorithm a Chomsky normal-form grammar.
+
+\section{Implementation of a linear grammar parser}
+
+Converting a grammar to the Chomsky normal-form cannot improve the running time of the parsers but a parser that directly parses strings using a linear grammar can be faster.
+
+To implement a linear grammar parser the easiest choice was to use the actual top-down parser as basis for the new parser.
+The program now contains a LinearGrammar class which simply stocks a linear grammar in the $rules$ variable without doing any modifications to the characters, the variable $non\_terminals$ is a string linking a \textit{non-terminal} to its index in the rules.
+The parser is concived in such a way that it can parse a string using a linear grammar but also a grammar in the Chomsky normal-form.
+Since the algorithm is based on the top-down parser if it is given a grammar in the Chomsky normal-form it will need the same number of resursive calls as the top-down parser would.
+
+\FloatBarrier
+\begin{algorithm}
+\caption{Linear grammar parser}
+\label{parse}
+\begin{algorithmic}[1]
+    \State $table$ is a 3d array of 0
+    \State $s \gets input\_string$
+    \Procedure{parse}{$var, i, j$} \Comment{Recursive parser function}
+        \If{$table[var, i, j] != 0$}
+            \State \textbf{return} $(table[var, i, j] == 1)$
+        \EndIf
+        \ForAll{$right\_hand \in rules[var]$}
+            \If{$right\_hand.size() == j - i \land s.size() - i \geq j - i$}
+                \State $bool \text{ } is\_equal \gets true$
+                \For{$k \gets 0: k < right\_hand.size()$}
+                    \If{$s[i + k] \neq right\_hand[k]$}
+                       \State $is\_equal \gets false$
+                        \State \textbf{break}
+                    \EndIf
+                \EndFor
+                \If{$is\_equal$}
+                    \State $table[var, i, j] \gets 1$
+                    \State \textbf{return} $true$
+                \EndIf
+            \EndIf
+            \State $var\_1, var\_2, var\_3 \text{ } are \text{ } characters$
+            \If{$right\_hand.size() == 1$}
+                \State $var\_1 \gets right\_hand[0]$
+                \If{$var\_1 \geq \text{} 'A' \land var\_1 \leq\text{}'Z'$}
+                    \If{$parse(non\_terminals.find(var\_1), i, j)$}
+                        \State $table[var, i, j] \gets 1$
+                        \State \textbf{return} $true$
+                    \EndIf
+                \EndIf
+            \ElsIf{$j - i \geq 2 \land right\_hand.size() == 2$}
+                \State $var\_1 \gets right\_hand[0]$
+                \State $var\_2 \gets right\_hand[1]$
+                \If{$var\_1 \geq \text{} 'A' \land var\_1 \leq \text{} 'Z' \land var\_2 \geq \text{} 'A' \land var\_2 \leq \text{} 'Z'$}
+                    \For{$k \gets i + 1: k < j$}
+                        \If{$parse(non\_terminals.find(var\_1), i, k) \land parse(non\_terminals.find(var\_2), k, j)$}
+                            \State $table[var, i, j] \gets 1$
+                            \State \textbf{return} $true$
+                        \EndIf
+                    \EndFor
+                \ElsIf{$(var\_1 < \text{} 'A' \lor var\_1 > \text{} 'Z') \land var\_2 \geq \text{}'A' \land var\_2 \leq \text{} 'Z'$}
+                    \If{$s[i] == var\_1$}
+                        \If{$parse(non\_terminals.find(var\_2), i + 1, j)$}
+                            \State $table[var, i, j] \gets 1$
+                            \State \textbf{return} $true$
+                        \EndIf
+                    \EndIf
+                    \algstore{part1}
+\end{algorithmic}
+\end{algorithm}
+\FloatBarrier
+\begin{algorithm}
+\begin{algorithmic}[1]
+                \algrestore{part1}
+                \ElsIf{$var\_1 \geq \text{} 'A' \land var\_1 \leq \text{} 'Z' \land (var\_2 < \text{}'A' \lor var\_2 > \text{} 'Z')$}
+                    \If{$s[j - 1] == var\_2$}
+                        \If{$parse(non\_terminals.find(var\_1), i, j - 1)$}
+                            \State $table[var, i, j] \gets 1$
+                            \State \textbf{return} $true$
+                        \EndIf
+                    \EndIf
+                \EndIf
+            \ElsIf{$j - i \geq 3 \land right\_hand.size() == 3$}
+                \State $var\_1 \gets right\_hand[0]$
+                \State $var\_2 \gets right\_hand[1]$
+                \State $var\_3 \gets right\_hand[2]$
+                \If{$var\_1 \geq \text{} 'A' \land var\_1 \leq \text{} 'Z' \land (var\_2 < \text{}'A' \lor var\_2 > \text{} 'Z') \land var\_3 \geq \text{} 'A' \land var\_3 \leq \text{} 'Z'$}
+                    \For{$k \gets i + 1; k < j - 1$}
+                        \If{$parse(non\_terminals.find(var\_1), i, k) \land var\_2 == s[k] \land parse(non\_terminals.find(var\_3), k + 1, j)$}
+                            \State $table[var, i, j] \gets 1$
+                            \State \textbf{return} $true$
+                        \EndIf
+                    \EndFor
+                \ElsIf{$(var\_1 < \text{} 'A' \lor var\_1 > \text{} 'Z') \land var\_2 \geq \text{}'A' \land var\_2 \leq \text{} 'Z') \land (var\_3 < \text{} 'A' \lor var\_3 > \text{} 'Z')$}
+                    \If{$var\_1 == s[i] \land parse(non\_terminals.find(var\_2), i + 1, j - 1) \land var\_3 == s[j - 1]$}
+                        \State $table[var, i, j] \gets 1$
+                        \State \textbf{return} $true$
+                    \EndIf
+                \EndIf
+            \EndIf
+        \EndFor
+        \State $table[var, i, j] \gets 2$
+        \State \textbf{return} $false$
+    \EndProcedure
+\end{algorithmic}
+\end{algorithm}
+\FloatBarrier
+
+Since this parser allows one to parse strings using a linear grammar instead of the Chomsky normal-form version it should be more efficient, indeed the linear grammar possesses less production rules and so the parser should need less recursive calls.
+
+On the other hand since this parser is based on the same logic as the top-down parser its complexity is the same as that last one: $O(n^3)$.
+That means that this parser will be more efficient in most practical cases but the same as the top-down parser in some other cases.
+
+\section{Experimentation and comparison with previous parsers}
+
+For this experimentation the first used linear grammar is the following.
+
+\begin{align*}
+    &S \to Ac | b\\
+    &A \to aS | aB\\
+    &B \to bS\\
+\end{align*}
+
+The linear parser is given the grammar above as it appears and the other parsers are given the automatically converted grammar as showed in section 4.1.
+
+The used pattern to obtain the following results is `$a\string^ x \text{ } b \text{ } c\string^ x$', the strings generated by this pattern always match the grammar.
+
+\FloatBarrier
+\begin{figure}[h]
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 4},height=0.5\textwidth,width=0.5\textwidth]
+    \nextgroupplot[title=Linear parser, xlabel=string size, ylabel=recursive calls, legend pos=north west]
+    \addplot coordinates {
+        (5001, 5001)
+        (10001, 10001)
+        (15001, 15001)
+        (20001, 20001)
+        (25001, 25001)
+        (30001, 30001)};
+    \nextgroupplot[title=Linear parser, xlabel=string size, ylabel=seconds, legend pos=north west]
+    \addplot coordinates {
+        (5001, 0.096865)
+        (10001, 0.356474)
+        (15001, 0.793719)
+        (20001, 1.4169)
+        (25001, 2.16269)
+        (30001, 3.06646)};
+    \addlegendentry{Total}
+    \addplot[mark=+, red] coordinates {
+        (5001, 0.095975)
+        (10001, 0.354843)
+        (15001, 0.791188)
+        (20001, 1.41313)
+        (25001, 2.15709)
+        (30001, 3.05987)};
+    \addlegendentry{Init}
+    \addplot coordinates {
+        (5001, 0.000854)
+        (10001, 0.001589)
+        (15001, 0.002483)
+        (20001, 0.003718)
+        (25001, 0.005531)
+        (30001, 0.006541)};
+    \addlegendentry{Parsing}
+    \nextgroupplot[title=`String' bottom-up parser, xlabel=string size, ylabel=iterations, legend pos=north west]
+    \addplot coordinates {
+        (51, 23350)
+        (201, 1358400)
+        (401, 10756800)
+        (601, 36195200)
+        (801, 85673600)
+        (1001, 167192000)};
+    \nextgroupplot[title=`String' bottom-up parser, xlabel=string size, ylabel=seconds, legend pos=north west]
+    \addplot coordinates {
+        (51, 0.000608)
+        (201, 0.031996)
+        (401, 0.268441)
+        (601, 0.932661)
+        (801, 3.07346)
+        (1001, 6.4173)};
+    \nextgroupplot[title=`Boolean' bottom-up parser, xlabel=string size, ylabel=iterations, legend pos=north west]
+    \addplot coordinates {
+        (51, 110755)
+        (201, 6768005)
+        (401, 53736005)
+        (601, 180904005)
+        (801, 428272005)
+        (1001, 835840005)};
+    \nextgroupplot[title=`Boolean' bottom-up parser, xlabel=string size, ylabel=seconds, legend pos=north west]
+    \addplot coordinates {
+        (51, 0.003579)
+        (201, 0.206125)
+        (401, 1.75563)
+        (601, 6.04026)
+        (801, 14.8514)
+        (1001, 30.8098)};
+    \nextgroupplot[title=Top-down parser, xlabel=string size, ylabel=recursive calls, legend pos=north west]
+    \addplot coordinates {
+        (51, 41126)
+        (201, 2657001)
+        (401, 21294001)
+        (601, 71911001)
+        (801, 170508001)
+        (1001, 333085001)};
+    \nextgroupplot[title=Top-down parser, xlabel=string size, ylabel=seconds, legend pos=north west]
+    \addplot coordinates {
+        (51, 0.00054)
+        (201, 0.031107)
+        (401, 0.248966)
+        (601, 0.801141)
+        (801, 1.82474)
+        (1001, 3.55611)};
+\end{groupplot}
+\end{tikzpicture}
+\caption{Results with linear grammar 1, case 1}
+\end{figure}
+\FloatBarrier
+
+The results above about the `String' and `boolean' bottom-up and top-down parsers are similar to results obtained before with various grammars.
+
+Is is interesting to see that the linear parser needs $n$ recursive calls to parse a string of size $n$ which matches this grammar, the expected running time is expected to be linear too.
+However the initialization process of the memoization table takes basicaly all the running time, the actual parsing time is too small to be relevant.
+This shows a limitation of the linear parser in that case, the memoization table limits the input strings sizes that can be parsed.
+Even with input strings bigger than $30000$ characters the parsing time is so low that even if it seems to follow a linear behaviour it is not relevant.
+
+The next results are obtained using a set of strings that does not match the grammar, the pattern is `$a\string^ n$'.
+
+The `boolean' bottom-up parser having the same behaviour for a given grammar the results are exactly the same for this pattern so they are not displayed.
+
+\FloatBarrier
+\begin{figure}[h]
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 3},height=0.5\textwidth,width=0.5\textwidth]
+    \nextgroupplot[title=Linear parser, xlabel=string size, ylabel=recursive calls, legend pos=north west]
+    \addplot coordinates {
+        (51, 1)
+        (201, 1)
+        (401, 1)
+        (601, 1)
+        (801, 1)
+        (1001, 1)};
+    \nextgroupplot[title=Linear parser, xlabel=string size, ylabel=seconds, legend pos=north west]
+    \addplot coordinates {
+        (51, 0.00004)
+        (201, 0.000215)
+        (401, 0.000726)
+        (601, 0.001504)
+        (801, 0.002412)
+        (1001, 0.003654)};
+    \addlegendentry{Total}
+    \addplot[mark=+, red] coordinates {
+        (51, 0.00004)
+        (201, 0.000215)
+        (401, 0.000726)
+        (601, 0.001504)
+        (801, 0.002412)
+        (1001, 0.003654)};
+    \addlegendentry{Init}
+    \addplot coordinates {
+        (51, 0.000002)
+        (201, 0.000002)
+        (401, 0.000002)
+        (601, 0.000002)
+        (801, 0.000002)
+        (1001, 0.000002)};
+    \addlegendentry{Parsing}
+    \nextgroupplot[title=`String' bottom-up parser, xlabel=string size, ylabel=iterations, legend pos=north west]
+    \addplot coordinates {
+        (51, 22605)
+        (201, 1355405)
+        (401, 10750805)
+        (601, 36186205)
+        (801, 85661605)
+        (1001, 167177005)};
+    \nextgroupplot[title=`String' bottom-up parser, xlabel=string size, ylabel=seconds, legend pos=north west]
+    \addplot coordinates {
+        (51, 0.000547)
+        (201, 0.032757)
+        (401, 0.258234)
+        (601, 1.19085)
+        (801, 2.98934)
+        (1001, 6.43343)};
+    \nextgroupplot[title=Top-down parser, xlabel=string size, ylabel=recursive calls, legend pos=north west]
+    \addplot coordinates {
+        (51, 42951)
+        (201, 2686801)
+        (401, 21413601)
+        (601, 72180401)
+        (801, 170987201)
+        (1001, 333834001)};
+    \nextgroupplot[title=Top-down parser, xlabel=string size, ylabel=seconds, legend pos=north west]
+    \addplot coordinates {
+        (51, 0.000558)
+        (201, 0.030692)
+        (401, 0.240735)
+        (601, 0.798035)
+        (801, 1.8229)
+        (1001, 3.54812)};
+\end{groupplot}
+\end{tikzpicture}
+\caption{Results with linear grammar 1, case 2}
+\end{figure}
+\FloatBarrier
+
+With this pattern the top-down needs a few more recursive calls than before, the change is so little that its running time is not touched by it.
+
+With that pattern the number of recursive calls for the linear parser is always 1 since it just goes through the right-hands of `S' and then return false.
+Once again the running time is high because of the initialization process, with that case the parsing time is constant and so small that it is not possible to represent it properly.
+
+A limitation of the linear parser for this grammar in this form is the memoization table, indeed the parsing process is so short that it would be better to just use a naive version of this parser by not using the table.
+This for two reason, the first obvious reason is that with this grammar the long part is to allocate the memory for the table.
+The second reason is that once again with string longer than 40000 characters the used machine is not able to allocate enough memory for the table.
+
+\subsection{Well balanced parentheses}
+
+To really compare the efficiency of the linear parser with the other ones the best thing is to compare how they deal with the well balanced parenthese grammar.
+
+The linear form of this grammar is the following.
+
+\begin{align*}
+    &S \to SS | (S) | ()
+\end{align*}
+
+The linear parser results will be compared with the top-down parser results in section 3.2.1.
+
+With this grammar the linear parser behaves differently depending on the pattern of the strings.
+The first considered case is the pattern `$)\string^ n$'.
+
+\FloatBarrier
+\begin{figure}[h]
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 2},height=0.5\textwidth,width=0.5\textwidth]
+    \nextgroupplot[title=Linear parser, xlabel=string size, ylabel=recursive calls, legend pos=north west]
+    \addplot coordinates {
+        (100, 4951)
+        (200, 19901)
+        (400, 79801)
+        (600, 179701)
+        (800, 319601)
+        (1000, 499501)};
+    \nextgroupplot[title=Linear parser, xlabel=string size, ylabel=seconds, legend pos=north west]
+    \addplot coordinates {
+        (100, 0.000117)
+        (200, 0.000346)
+        (400, 0.00112)
+        (600, 0.002303)
+        (800, 0.004045)
+        (1000, 0.006164)};
+    \addlegendentry{Total}
+    \addplot coordinates {
+        (100, 0.000023)
+        (200, 0.000083)
+        (400, 0.000285)
+        (600, 0.000526)
+        (800, 0.001056)
+        (1000, 0.001518)};
+    \addlegendentry{Init}
+    \addplot coordinates {
+        (100, 0.000085)
+        (200, 0.000252)
+        (400, 0.000814)
+        (600, 0.001761)
+        (800, 0.002977)
+        (1000, 0.004633)};
+    \addlegendentry{Parsing}
+    \nextgroupplot[title=Top-down parser, xlabel=string size, ylabel=recursive calls, legend pos=north west]
+    \addplot coordinates {
+        (100, 14851)
+        (200, 59701)
+        (400, 239401)
+        (600, 539101)
+        (800, 958801)
+        (1000, 1498501)};
+    \nextgroupplot[title=Top-down parser, xlabel=string size, ylabel=seconds, legend pos=north west]
+    \addplot coordinates {
+        (100, 0.000317)
+        (200, 0.00112)
+        (400, 0.004209)
+        (600, 0.008897)
+        (800, 0.015769)
+        (1000, 0.021436)};
+    \addlegendentry{Total}
+    \addplot coordinates {
+        (100, 0.000119)
+        (200, 0.000363)
+        (400, 0.00129)
+        (600, 0.002816)
+        (800, 0.004587)
+        (1000, 0.007104)};
+    \addlegendentry{Init}
+    \addplot coordinates {
+        (100, 0.000188)
+        (200, 0.000742)
+        (400, 0.002894)
+        (600, 0.006056)
+        (800, 0.011159)
+        (1000, 0.017006)};
+    \addlegendentry{Parsing}
+\end{groupplot}
+\end{tikzpicture}
+\caption{Results with linear grammar 2, case 1}
+\end{figure}
+\FloatBarrier
+
+Here the two parsers running times follow the same behaviour as their number of recursive calls, the linear parser needs less recursive calls and so has a lower running time than the top-down parser.
+
+For the second case the same parsers are used and the used pattern is `$(\string^ n$'.
+
+\FloatBarrier
+\begin{figure}[h]
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 2},height=0.5\textwidth,width=0.5\textwidth]
+    \nextgroupplot[title=Linear parser, xlabel=string size, ylabel=recursive calls, legend pos=north west]
+    \addplot coordinates {
+        (100, 87026)
+        (200, 681551)
+        (400, 5393101)
+        (600, 18134651)
+        (800, 42906201)
+        (1000, 83707751)};
+    \nextgroupplot[title=Linear parser, xlabel=string size, ylabel=seconds, legend pos=north west]
+    \addplot coordinates {
+        (100, 0.001216)
+        (200, 0.007831)
+        (400, 0.054993)
+        (600, 0.180519)
+        (800, 0.425874)
+        (1000, 0.805482)};
+    \addlegendentry{Total}
+    \addplot coordinates {
+        (100, 0.000031)
+        (200, 0.000104)
+        (400, 0.000292)
+        (600, 0.00069)
+        (800, 0.001011)
+        (1000, 0.00142)};
+    \addlegendentry{Init}
+    \addplot[mark=+, brown] coordinates {
+        (100, 0.001175)
+        (200, 0.007718)
+        (400, 0.054686)
+        (600, 0.179794)
+        (800, 0.42483)
+        (1000, 0.804034)};
+    \addlegendentry{Parsing}
+    \nextgroupplot[title=Top-down parser, xlabel=string size, ylabel=recursive calls, legend pos=north west]
+    \addplot coordinates {
+        (100, 340801)
+        (200, 2696601)
+        (400, 21453201)
+        (600, 72269801)
+        (800, 171146401)
+        (1000, 334083001)};
+    \nextgroupplot[title=Top-down parser, xlabel=string size, ylabel=seconds, legend pos=north west]
+    \addplot coordinates {
+        (100, 0.004185)
+        (200, 0.032133)
+        (400, 0.25005)
+        (600, 0.805403)
+        (800, 1.97674)
+        (1000, 3.68684)};
+    \addlegendentry{Total}
+    \addplot coordinates {
+        (100, 0.000131)
+        (200, 0.00039)
+        (400, 0.001275)
+        (600, 0.002598)
+        (800, 0.005133)
+        (1000, 0.0072)};
+    \addlegendentry{Init}
+    \addplot[mark=+, brown] coordinates {
+        (100, 0.004044)
+        (200, 0.031729)
+        (400, 0.248752)
+        (600, 0.802779)
+        (800, 1.97158)
+        (1000, 3.67961)};
+    \addlegendentry{Parsing}
+\end{groupplot}
+\end{tikzpicture}
+\caption{Results with linear grammar 2, case 2}
+\end{figure}
+\FloatBarrier
+
+Here the initialization time is negligible before the parsing time for both parsers.
+
+With that grammar the linear parser is more efficient than the top-down parser which was by far the most efficient compared to the other parser in section 3.2.1.
+
+Here is the verification of the complexity of the linear parser.
+
+\begin{align*}
+    &y = 8.04034 \cdot 10^{-10} \cdot x^3
+\end{align*}
+
+\FloatBarrier
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=1 by 1},height=0.5\textwidth,width=0.5\textwidth]
+    \nextgroupplot[title=linear parser, xlabel=string size, ylabel=seconds, legend pos=north west]
+    \addplot[domain=0:1000, samples=100, line width=1.5pt, green] {8.04034*(10^(-10))*(x^3)};
+    \addlegendentry{Theory}
+    \addplot[only marks, mark=*, mark size=2pt] coordinates {
+        (100, 0.001175)
+        (200, 0.007718)
+        (400, 0.054686)
+        (600, 0.179794)
+        (800, 0.42483)
+        (1000, 0.804034)};
+    \addlegendentry{Real}
+\end{groupplot}
+\end{tikzpicture}
+\caption{Checking theorical fit, linear parser}
+\end{figure}
+\FloatBarrier
+
+The real points fit perfectly the theorical curve which proves that the complexity of the linear parser really is $O(n^3)$.

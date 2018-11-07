@@ -1,0 +1,210 @@
+The grammar used in this section is the following:
+
+\begin{align*}
+    &S \to BA\\
+    &A \to a\\
+    &B \to BB|a|b
+\end{align*}
+
+\subsubsection{Number of iterations/recursive calls for each parser}
+
+An interesting thing to notice is that with that grammar and a string of size $n$, no matter the used pattern, the amount of needed iterations or recursive calls will be the same for the naive, top-down and `boolean' bottom-up parsers.
+
+The `string' bottom-up parser follows exactly the same behaviour as with the previous grammar.
+
+By decomposing the behaviour of the naive parser one can find out that for any pattern it evolves following that sequence:
+\begin{equation}\label{seq:naive}
+n + (n - 1)^2
+\end{equation}
+
+It can be demonstrated like so:
+
+\begin{itemize}
+    \item[$-$] The initial call is $parse(S, 0, n)$
+    \item[$-$] Then it calls $parse(B, 0, 1)$, which returns true no matter the character.
+    \item[$-$] Then it calls $parse(A, 1, n)$, which returns false since A doesn't possess any \textit{non-terminals}.
+    \item[$-$] Then it calls $parse(B, 0, 2)$, which returns true by doing 2 more recursive calls, $parse(B, 0, n)$ will always return true and do two more recursive calls each time it is called.
+    \item[$-$] The process ends up when $parse(A, n - 1, n)$ is called, then it returns true or false depending on if the last character is an `a' or a `b'. No matter the result, and so the pattern, the algorithm will always make the same amount of recursive calls.
+    \item[$-$] When it ends up the number of recursive calls is $1$ for the initial call, plus $n - 1$ for each time it has called parse(A, x, n), plus $(n - 1)^2$ for each time it has called parse(B, 0, x) and all the recursive calls it made. So the total number of recursive calls is $n + (n - 1)^2$ for the naive parser.
+\end{itemize}
+
+The top-down parser follows the exact same behaviour as the naive parser, to parse a string of size $n$ it will also need $n + (n - 1)^2$ recursive calls.
+
+However some sub-problems will not need to be recomputed by the top-down parser, it is possible to show that, for a string of size $n$ and whatever pattern is used, it needs to solve that many sub-problems:
+\begin{equation}\label{seq:top-down}
+n + (n - 1)^2 - \dfrac{(n - 2) \cdot (n - 1)}{2}
+\end{equation}
+
+Here is the demonstration:
+
+\begin{itemize}
+    \item[$-$] The running process is exactly the same as for the naive one, the difference is that some results have already been computed and can be directly returned.
+    \item[$-$] The amount of results already stored in the table and then asked again increases by one for each level of recursive depth when $parse(B, 0, x)$ is called.
+    \item[$-$] This amount corresponds to a triangular number sequence: $\dfrac{n \cdot (n + 1)}{2}$. The formula needs to be twisted a little to match the string size $n$ and the number of asked already known results is $\dfrac{(n - 1) \cdot (n - 2)}{2}$.
+    \item[$-$] Then the total amount of solved sub-problems is just the number of recursive calls minus the expression above: $n + (n - 1)^2 - \dfrac{(n - 2) \cdot (n - 1)}{2}$.
+\end{itemize}
+
+It is now possible to compare the anticipated behaviours of the naive, top-down and bottom-up parsers, using functions \ref{seq:naive} and \ref{eq:bottom-up_iterations}.
+
+\FloatBarrier
+\begin{figure}[h]
+\begin{tikzpicture}
+    \begin{groupplot}[group style={group size=2 by 1},height=0.5\textwidth,width=0.5\textwidth] 
+    \nextgroupplot[title=`Boolean' bottom-up, xlabel=string size, ylabel=iterations]
+    \addplot[red, domain=0:1000]{2 * x + ((3 / 6) * ((3 * (x^2) * (x + 1)) - (x * (x + 1) * ((2 * x) + 1))))};
+    \nextgroupplot[title=Naive and top-down, xlabel=string size, ylabel=recursive calls]
+    \addplot[blue, domain=0:50000]{x + (x - 1)^2};
+    \end{groupplot}
+\end{tikzpicture}
+\caption{Anticipation of the behaviours of the parsers, grammar 3}
+\end{figure}
+\FloatBarrier
+
+The `boolean' bottom-up parser follows a power function with an exponent of three as usual, but the top-down and naive parsers will follow a power function with an exponent of two with that grammar.
+
+\subsubsection{Comparing the efficiency}
+
+Except for the `string' bottom-up parser, with this grammar there is no particular cases, any pattern will be as long to parse as another by any of the three other parsers, the first used pattern is $a^n$.
+
+\FloatBarrier
+\begin{figure}[h]
+\begin{tikzpicture}
+    \begin{groupplot}[group style={group size=2 by 2},height=0.5\textwidth,width=0.5\textwidth] 
+    \nextgroupplot[title=Both bottom-up counters, ylabel=iterations, legend pos = north west]
+    \addplot coordinates {
+        (100, 1500150)
+        (200, 12000300)
+        (400, 96000600)
+        (600, 324000900)
+        (800, 768001200)
+        (1000, 1500001500)};
+    \addlegendentry{String}
+    \addplot coordinates {
+        (100, 333600)
+        (200, 2667200)
+        (400, 21334400)
+        (600, 72001600)
+        (800, 170668800)
+        (1000, 333336000)};
+    \addlegendentry{Boolean}
+    \nextgroupplot[title=Both bottom-up running times, ylabel=seconds, legend pos = north west]
+    \addplot coordinates {
+        (100, 0.087481)
+        (200, 0.652142)
+        (400, 5.16778)
+        (600, 16.9815)
+        (800, 40.5165)
+        (1000, 79.5284)};
+    \addlegendentry{String}
+    \addplot coordinates {
+        (100, 0.012412)
+        (200, 0.102093)
+        (400, 0.82625)
+        (600, 3.08987)
+        (800, 8.56199)
+        (1000, 18.7261)};
+    \addlegendentry{Boolean}
+    \nextgroupplot[title=Top-down/Naive counters, ylabel=recursive calls, xlabel=string size, legend pos = north west]
+    \addplot coordinates {
+        (100, 9901)
+        (1000, 999001)
+        (3000, 8997001)
+        (5000, 24995001)
+        (7000, 48993001)
+        (9000, 80991001)};
+    \nextgroupplot[title=Top-down/Naive running times, ylabel=seconds, legend pos=north west, xlabel=string size]
+    \addplot coordinates {
+        (100, 0.000158)
+        (1000, 0.016837)
+        (3000, 0.176553)
+        (5000, 0.50593)
+        (7000, 1.05917)
+        (9000, 1.69652)};
+    \addlegendentry{TD parsing}
+    \addplot coordinates {
+        (100, 0.00027)
+        (1000, 0.020982)
+        (3000, 0.207965)
+        (5000, 0.595206)
+        (7000, 1.23223)
+        (9000, 1.99075)};
+    \addlegendentry{TD total}
+    \addplot coordinates {
+        (100, 0.000091)
+        (1000, 0.004109)
+        (3000, 0.031383)
+        (5000, 0.089245)
+        (7000, 0.17303)
+        (9000, 0.29419)};
+    \addlegendentry{TD init}
+    \addplot coordinates {
+        (100, 0.000173)
+        (1000, 0.01458)
+        (3000, 0.134243)
+        (5000, 0.374054)
+        (7000, 0.776454)
+        (9000, 1.17694)};
+    \addlegendentry{Naive}
+    \end{groupplot}
+\end{tikzpicture}
+\caption{The 4 parsers behaviours, grammar 3}
+\end{figure}
+\FloatBarrier
+
+With strings of sizes greater than $9,000$ the top-down parser could not allocate the table so the used strings did not exceed that size.
+
+The same string sizes are used for the top-down and naive parsers, it is possible to see on the graphs above that despite the fact that the naive parser and the top-down parsers need the same amount of recursive calls the naive parser has a lower running time.
+
+The only parser that needs a various number of iterations is the `string' bottom-up parser, the pattern `$a\string^ n$' was as previously its worst case, its best case with that grammar is the pattern `$b\string^ n$' as previously.
+It is not a suprise to find out that the `string' bottom-up parser is slower than the `boolean' version with that grammar, since it follows the same behaviour as before.
+
+Next are the results obtained with the `string' bottom-up parser, using the last results for the `boolean' bottom-up parser as reference.
+
+\FloatBarrier
+\begin{figure}[h]
+\begin{tikzpicture}
+    \begin{groupplot}[group style={group size=2 by 1},height=0.5\textwidth,width=0.5\textwidth] 
+    \nextgroupplot[title=Both bottom-up counters, ylabel=iterations, xlabel=string size, legend pos = north west]
+    \addplot coordinates {
+        (100, 500250)
+        (200, 4000500)
+        (400, 32001000)
+        (600, 108001500)
+        (800, 256002000)
+        (1000, 500002500)};
+    \addlegendentry{String}
+    \addplot coordinates {
+        (100, 333600)
+        (200, 2667200)
+        (400, 21334400)
+        (600, 72001600)
+        (800, 170668800)
+        (1000, 333336000)};
+    \addlegendentry{Boolean}
+    \nextgroupplot[title=Both bottom-up running times, legend pos = north west, xlabel=string size, ylabel=seconds]
+    \addplot coordinates {
+        (100, 0.042859)
+        (200, 0.322342)
+        (400, 2.60902)
+        (600, 8.56177)
+        (800, 20.5762)
+        (1000, 40.6679)};
+    \addlegendentry{String}
+    \addplot coordinates {
+        (100, 0.012412)
+        (200, 0.102093)
+        (400, 0.82625)
+        (600, 3.08987)
+        (800, 8.56199)
+        (1000, 18.7261)};
+    \addlegendentry{Boolean}
+    \end{groupplot}
+\end{tikzpicture}
+\caption{The `string' bottom-up parser worst case, grammar 3}
+\end{figure}
+\FloatBarrier
+
+As with the previous grammar the best case of the `string' bottom-up parser is once again slower than the `boolean' version.
+The running time follows exactly the same curve as the number of iterations for the `string' bottom-up parser.
+
+It would be possible to plot the area containing all the possible cases of the `string' bottom-up parser once again but it would be the exact same figure as before since the running time of the parser for each pattern remains the same with both grammars.

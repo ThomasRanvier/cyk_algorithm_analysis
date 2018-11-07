@@ -1,0 +1,8 @@
+\contentsline {algorithm}{\numberline {1}{\ignorespaces Naive parser\relax }}{12}{algorithm.1}
+\contentsline {algorithm}{\numberline {2}{\ignorespaces Top-down parser\relax }}{13}{algorithm.2}
+\contentsline {algorithm}{\numberline {3}{\ignorespaces `String' bottom-up parser\relax }}{15}{algorithm.3}
+\contentsline {algorithm}{\numberline {4}{\ignorespaces `Boolean' bottom-up parser\relax }}{16}{algorithm.4}
+\contentsline {algorithm}{\numberline {5}{\ignorespaces Linear grammar parser\relax }}{38}{algorithm.5}
+\contentsline {algorithm}{\numberline {6}{\ignorespaces Top-down parser character modification\relax }}{49}{algorithm.6}
+\contentsline {algorithm}{\numberline {7}{\ignorespaces Top-down parser character deletion\relax }}{51}{algorithm.7}
+\contentsline {algorithm}{\numberline {8}{\ignorespaces Top-down parser correction and string recuperation\relax }}{53}{algorithm.8}

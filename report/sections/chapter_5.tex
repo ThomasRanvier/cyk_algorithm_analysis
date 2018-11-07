@@ -1,0 +1,298 @@
+Since the corrections are directly effectued on the \textit{primitive symbols} the choice that seemed to be the simplest was to use the top-down parser as basis for the implementation of the error correction parser.
+
+\section{Implementation of the character replacement}
+
+The first step was to implement the character replacement, this is a modified version of the previous code of the top-down parser:
+
+\FloatBarrier
+\begin{algorithm}
+    \caption{Top-down parser character modification}
+    \label{parse}
+    \begin{algorithmic}[1]
+        \State $table$ is a 3d array of 0
+        \State $s \gets input\_string$
+        \Procedure{parse}{$var, i, j$} \Comment{Recursive parser function}
+            \If{$table[var, i, j] != 0$}
+                \State \textbf{return} $(table[var, i, j] == 1)$
+            \EndIf
+            \If{$i == j - 1$}
+                \ForAll{$t \in terminal\_rule[var]$}
+                    \If{$t == s[i]$}
+                        \State $table[var, i, j] \gets \textcolor{red}{1}$
+                        \State \textbf{return} \textcolor{red}{$table[var, i, j]$}
+                    \EndIf
+                \EndFor
+                \textcolor{red}{\If{$terminal\_rule[var].size() > 0$}
+                    \State $table[var, i, j] \gets 2$
+                    \State \textbf{return} $table[var, i, j]$
+                \EndIf}
+            \Else
+                \State \textcolor{red}{$min \gets INT\_MAX$}
+                \ForAll{$nt \in non\_terminal\_rules[var]$}
+                    \For{$k \gets i + 1; k < j$}
+                        \State \textcolor{red}{$declare \text{ } res\_1 \text{ } and \text{ } res\_2$}
+                        \textcolor{red}{\If{$(res\_1 \gets parse(nt[0], i, k)) < INT\_MAX \text{ } \land \text{ } (res\_2 \gets parse(nt[1], k, j)) < INT\_MAX$}
+                            \If{$res\_1 + res\_2 - 1 < min$}
+                                \State $min \gets res\_1 + res\_2 - 1$
+                            \EndIf
+                        \EndIf}
+                    \EndFor
+                \EndFor
+                \State \textcolor{red}{$table[var, i, j] \gets min$}
+                \State \textcolor{red}{\textbf{return} $table[var, i, j]$}
+            \EndIf
+            \State $table[var, i, j] \gets \textcolor{red}{INT\_MAX}$
+            \State \textbf{return} \textcolor{red}{$table[var, i, j]$}
+        \EndProcedure
+    \end{algorithmic}
+\end{algorithm}
+\FloatBarrier
+
+All the differences with the initial top-down parser are in red on this pseudo-code.
+
+With those modifications the top-down parser now returns an integer when it parses a string:
+\begin{itemize}
+    \item[$-$] If the value is 1 it means that the string can be parsed without any modifications.
+    \item[$-$] If the value is $x > 1$ it means that the string can be parsed with $x - 1$ modifications.
+    \item[$-$] If the value is $INT\_MAX$, the maximum value of an integer, it means that the string cannot be parsed, no matter how much modifications could be made.
+\end{itemize}
+
+\section{Implementation of the character deletion}
+
+Once the character modification is done the next step is to implement character deletion.
+
+\FloatBarrier
+\begin{algorithm}
+    \caption{Top-down parser character deletion}
+    \label{parse}
+    \begin{algorithmic}[1]
+        \State $table$ is a 3d array of 0
+        \State $s \gets input\_string$
+        \Procedure{parse}{$var, i, j$} \Comment{Recursive parser function}
+            \If{$table[var, i, j] != 0$}
+                \State \textbf{return} $(table[var, i, j] == 1)$
+            \EndIf
+            \If{$i == j - 1$}
+                \ForAll{$t \in terminal\_rule[var]$}
+                    \If{$t == s[i]$}
+                        \State $table[var, i, j] \gets 1$
+                        \State \textbf{return} $table[var, i, j]$
+                    \EndIf
+                \EndFor
+                \If{$terminal\_rule[var].size() > 0$}
+                    \State $table[var, i, j] \gets 2$
+                    \State \textbf{return} $table[var, i, j]$
+                \EndIf
+            \Else
+                \State $min \gets INT\_MAX$
+                \State \textcolor{red}{$del\_1 \gets parse(var, i + 1, j)$}
+                \State \textcolor{red}{$del\_2 \gets parse(var, i, j - 1)$}
+                \ForAll{$nt \in non\_terminal\_rules[var]$}
+                    \For{$k \gets i + 1; k < j$}
+                        \State $declare \text{ } res\_1 \text{ } and \text{ } res\_2$
+                        \If{\begin{varwidth}[t]{\linewidth}$(res\_1 \gets parse(nt[0], i, k)) < INT\_MAX \text{ } \land \text{ } (res\_2 \gets parse(nt[1], k, j)) < INT\_MAX$}\end{varwidth}
+                            \If{$res\_1 + res\_2 - 1 < min$}
+                                \State $min \gets res\_1 + res\_2 - 1$
+                            \EndIf
+                        \EndIf
+                    \EndFor
+                \EndFor
+                \textcolor{red}{\If{$del\_2 < del\_1$}
+                    \State $del\_1 \gets del\_2$
+                \EndIf
+                \If{$del\_1 < min$}
+                    \State $min \gets del\_1$
+                \EndIf}
+                \State $table[var, i, j] \gets min$
+                \State \textbf{return} $table[var, i, j]$
+            \EndIf
+            \State $table[var, i, j] \gets INT\_MAX$
+            \State \textbf{return} $table[var, i, j]$
+        \EndProcedure
+    \end{algorithmic}
+\end{algorithm}
+\FloatBarrier
+
+That algorithm returns the number of modifications plus deletions, the next step is to be able to return the corrected version of the input string.
+Once such corrected string can be generated it will be trivial to know how much deletions and modifications were both needed.
+
+\section{Recuperation of the corrected string}
+
+In order to proceed to the recuperation of the corrected string a structure is used to contain the result of the parse function plus the corresponding corrected string.
+The memoization table of the top-down parser will now contains datas of this structure.
+The parse function will also now return a $parse\_result$ structure, it will also take the corrected string at its actual state as parameter.
+
+This is is the pseudo-code with the modifications needed to be able to retrieve the corrected string.
+
+\FloatBarrier
+\begin{algorithm}
+    \caption{Top-down parser correction and string recuperation}
+    \label{parse}
+    \begin{algorithmic}[1]
+        \State $table$ is a 3d array of $parse\_result$
+        \State $s \gets input\_string$
+        \Procedure{parse}{$var, i, j, \textcolor{red}{sc}$} \Comment{Recursive parser function}
+            \If{$table[var, i, j] != 0$}
+                \State \textbf{return} $(table[var, i, j] == 1)$
+            \EndIf
+            \If{$i == j - 1$}
+                \ForAll{$t \in terminal\_rule[var]$}
+                    \If{$t == s[i]$}
+                        \State \textcolor{red}{$table[var, i, j].result \gets 1$}
+                        \State \textcolor{red}{$table[var, i, j].string \gets sc$}
+                        \State \textbf{return} $table[var, i, j]$
+                    \EndIf
+                \EndFor
+                \If{$terminal\_rule[var].size() > 0$}
+                    \State \textcolor{red}{$table[var, i, j].result \gets 2$}
+                    \State \textcolor{red}{$table[var, i, j].string \gets terminal\_rule[var][0]$}
+                    \State \textbf{return} $table[var, i, j]$
+                \EndIf
+            \Else
+                \State $min \gets INT\_MAX$
+                \State \textcolor{red}{$new\_s \gets ""$}
+                \State \textcolor{red}{$del\_1 \gets parse(var, i + 1, j, sc.substr(1, sc.size() - 1))$}
+                \State \textcolor{red}{$del\_2 \gets parse(var, i, j - 1, sc.substr(0, sc.size() - 1))$}
+                \ForAll{$nt \in non\_terminal\_rules[var]$}
+                    \For{$k \gets i + 1; k < j$}
+                        \State $res\_1 \gets parse(nt[0], i, k, \textcolor{red}{sc.substr(0, k - i)})$
+                        \If{$res\_1\textcolor{red}{.result} < INT\_MAX$}
+                            \State $res\_2 \gets parse(nt[1], k, j, \textcolor{red}{sc.substr(k - i, j - k)})$
+                            \If{$res\_2\textcolor{red}{.result} < INT\_MAX$}
+                                \If{$res\_1\textcolor{red}{.result} + res\_2\textcolor{red}{.result} - 1 < min$}
+                                    \State $min \gets res\_1\textcolor{red}{.result} + res\_2\textcolor{red}{.result} - 1$
+                                    \State \textcolor{red}{$new\_s \gets res\_1.string + res\_2.string$}
+                                \EndIf
+                            \EndIf
+                        \EndIf
+                    \EndFor
+                \EndFor
+                \State $table[var, i, j] \gets \textcolor{red}{min\_parse\_result(del\_1, del\_2, min, new\_string)}$
+                \State \textbf{return} $table[var, i, j]$
+            \EndIf
+            \State \textcolor{red}{$table[var, i, j].result \gets INT\_MAX$}
+            \State \textcolor{red}{$table[var, i, j].string \gets sc$}
+            \State \textbf{return} $table[var, i, j]$
+        \EndProcedure
+    \end{algorithmic}
+\end{algorithm}
+\FloatBarrier
+
+Such an algorithm will end by returning the corrected string plus the sum of all needed corrections and deletions to arrive to this result.
+It is then trivial to separate the number of needed deletions from the number of modifications, just by comparing the size from the initial string to the size of the corrected string.
+
+The running time of this algorithm will always be longer than for the top-down parser since the algorithm has to test the two possible deletions before entering the main loop, which the top-down parser does not do.
+However the complexity of this algorithm remains the same as for the top-down parser, $O(n^3)$.
+
+\section{Obtained results}
+
+\subsection{Well balanced parenthesis}
+
+The goal of the new parser is to correct an input string to make it match the given grammar if it is possible, the first experimentation is realised on the well balanced parenthesis.
+
+Initially it was planned to check the parser's performances on the following cases:
+
+\begin{itemize}
+    \item[$-$] Strings in which the parser must modify half of the characters, that case corresponds to whatever pattern gives a string that does not contain any substring that would match the grammar, for example `$)\string^ n$', or `$(\string^ n$', or `$)\string^ n / 2 \text{ } (\string^ n / 2$'.
+    \item[$-$] Strings that match the grammar, then the parser does not have to modify the input string.
+    \item[$-$] Strings that match the grammar or not, containing an odd number of characters so the parser needs to delete one.
+\end{itemize}
+
+It was interesting to notice that the correction top-down parser followed exactly the same behaviour no matter what pattern the given string follows.
+
+\FloatBarrier
+\begin{figure}[h]
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1},height=0.5\textwidth,width=0.5\textwidth]
+    \nextgroupplot[title=Number of recursive calls, xlabel=string size, ylabel=recursive calls, legend pos=north west]
+    \addplot coordinates {
+        (50, 171256)
+        (100, 1352506)
+        (200, 10745006)
+        (300, 36177506)
+        (400, 85650006)
+        (500, 167162506)};
+    \nextgroupplot[title=Running time, xlabel=string size, ylabel=seconds, legend pos=north west]
+    \addplot coordinates {
+        (50, 0.009821)
+        (100, 0.084296)
+        (200, 0.705466)
+        (300, 2.82136)
+        (400, 7.1228)
+        (500, 14.8394)};
+\end{groupplot}
+\end{tikzpicture}
+\end{figure}
+\FloatBarrier
+
+The running time plot follows exactly the same curve as the number of recursive calls, which was expected.
+
+Here is the verification of the complexity of the correction parser.
+
+\begin{align*}
+    &y = 1.187152 \cdot 10^{-7} \cdot x^3
+\end{align*}
+
+\FloatBarrier
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=1 by 1},height=0.5\textwidth,width=0.5\textwidth]
+    \nextgroupplot[title=correction parser, xlabel=string size, ylabel=seconds, legend pos=north west]
+    \addplot[domain=0:500, samples=100, line width=1.5pt, green] {1.187152*(10^(-7))*(x^3)};
+    \addlegendentry{Theory}
+    \addplot[only marks, mark=*, mark size=2pt] coordinates {
+        (50, 0.009821)
+        (100, 0.084296)
+        (200, 0.705466)
+        (300, 2.82136)
+        (400, 7.1228)
+        (500, 14.8394)};
+    \addlegendentry{Real}
+\end{groupplot}
+\end{tikzpicture}
+\caption{Checking theorical fit, correction parser}
+\end{figure}
+\FloatBarrier
+
+The running time behaviour of the correction parser follows exactly the theorical fit, which proves that its complexity is $O(n^3)$.
+
+\subsection{Strings starting with an `a'}
+
+The next expimentation is on the grammar that matches strings that start with an `a'.
+With that grammar the parser follows exactly the same behaviour as before, it always need the same amount of recursive calls for a string of size $n$, no matter the pattern.
+
+\FloatBarrier
+\begin{figure}[h]
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1},height=0.5\textwidth,width=0.5\textwidth]
+    \nextgroupplot[title=Number of recursive calls, xlabel=string size, ylabel=recursive calls, legend pos=north west]
+    \addplot coordinates {
+        (50, 88005)
+        (100, 686005)
+        (200, 5412005)
+        (300, 18178005)
+        (400, 42984005)
+        (500, 83830005)};
+    \nextgroupplot[title=Running time, xlabel=string size, ylabel=seconds, legend pos=north west]
+    \addplot coordinates {
+        (50, 0.004987)
+        (100, 0.04377)
+        (200, 0.420274)
+        (300, 1.56265)
+        (400, 3.8529)
+        (500, 8.30812)};
+\end{groupplot}
+\end{tikzpicture}
+\end{figure}
+\FloatBarrier
+
+Here the parser does not need as much recursive calls as with the previous grammar but it still follows exactly the same behaviour.
+
+The number of solved subproblems solved for this grammar follows the next sequence, with $n$ the size of the input string.
+
+$$
+1 + \dfrac{(n - 1) \cdot (3 \cdot (n - 1) + 1)}{2} + (n - 1) \cdot 2
+$$
+
+It has no use to keep going with the experimentation since no matter the grammar or the given string this parser always follows the same behaviour.
